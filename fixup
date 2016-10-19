@@ -1,0 +1,9 @@
+#!/bin/bash
+
+cd /var/lib/dehydrated || exit 1
+
+git submodule update --init || exit 1
+
+mkdir -p etc acme-challenge
+
+chown -R letsencrypt:letsencrypt etc acme-challenge

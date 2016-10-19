@@ -1,0 +1,13 @@
+#!/bin/bash
+
+export HOME=/var/lib/dehydrated
+cd $HOME
+
+[[ -n "$*" ]] || set -- --cron
+
+if [[ "x$(id -u letsencrypt)" = "x$(id -u)" ]]
+then
+	exec $HOME/script/dehydrated --config $HOME/config "$@"
+else
+	exec sudo -u letsencrypt -H $HOME/script/dehydrated --config $HOME/config "$@"
+fi
