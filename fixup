@@ -2,6 +2,9 @@
 
 cd /var/lib/dehydrated || exit 1
 
+grep -qe '^letsencrypt:' /etc/group || addgroup --gid 650 letsencrypt
+grep -qe '^letsencrypt:' /etc/passwd || adduser --uid 650 --group letsencrypt --gecos 'Lets Encrypt' --disabled-login --home $PWD --shell /bin/false letsencrypt
+
 git submodule update --init || exit 1
 
 mkdir -p etc acme-challenge
