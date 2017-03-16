@@ -1,12 +1,25 @@
 #!/bin/bash
 
-cd /var/lib/dehydrated || exit 1
+case "${1:-}" in
+	*?@?*)
+		EMAIL="$1";;
+	*)
+		EMAIL=techgroup@amaze.com.au;;
+esac
+
+set -ex
+
+cd /var/lib/dehydrated
 
 grep -qe '^letsencrypt:' /etc/group || addgroup --gid 650 letsencrypt
 grep -qe '^letsencrypt:' /etc/passwd || adduser --uid 650 --ingroup letsencrypt --gecos 'Lets Encrypt' --disabled-login --home $PWD --shell /bin/false letsencrypt
 
-git submodule update --init || exit 1
+git submodule update --init
 
 mkdir -p etc acme-challenge
 
 chown -R letsencrypt:letsencrypt etc acme-challenge
+
+sed -e "/^CONTACT_EMAIL=/s;=.*;=$EMAIL;" <config.tmpl >config
+
+./dehydrated --register --accept-terms
