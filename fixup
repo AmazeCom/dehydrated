@@ -2,24 +2,41 @@
 
 case "${1:-}" in
 	*?@?*)
-		EMAIL="$1";;
+		EMAIL="$1"
+		shift;;
 	*)
 		EMAIL=techgroup@amaze.com.au;;
+esac
+
+case "${1:-}" in
+	???*)
+		LETSENC_USER="$1"
+		shift;;
+	*)
+		case "$(uname -s)" in
+			Linux)
+				LETSENC_USER=letsencrypt;;
+			*)
+				LETSENC_USER=letsenc;;
+		esac
+		;;
 esac
 
 set -ex
 
 cd /var/lib/dehydrated
 
-grep -qe '^letsencrypt:' /etc/group || addgroup --gid 650 letsencrypt
-grep -qe '^letsencrypt:' /etc/passwd || adduser --uid 650 --ingroup letsencrypt --gecos 'Lets Encrypt' --disabled-login --home $PWD --shell /bin/false letsencrypt
+grep -qe "^$LETSENC_USER:" /etc/group || groupadd -g 650 $LETSENC_USER || exit 1
+grep -qe "^$LETSENC_USER:" /etc/passwd || useradd -u 650 -g $LETSENC_USER -c 'Lets Encrypt' -d $PWD -s /bin/false $LETSENC_USER || exit 1
 
 git submodule update --init
 
 mkdir -p etc acme-challenge
 
-chown -R letsencrypt:letsencrypt etc acme-challenge
+chown -R $LETSENC_USER:$LETSENC_USER etc acme-challenge
 
 sed -e "/^CONTACT_EMAIL=/s;=.*;=$EMAIL;" <config.tmpl >config
+sed -e "/^LETSENC_USER=/s;=.*;=$LETSENC_USER;" <dehydrated.tmpl >dehydrated
+chmod a+x dehydrated
 
 ./dehydrated --register --accept-terms
